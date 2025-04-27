@@ -28,3 +28,6 @@ def example():
     print("\nAfter removing p → q:")
     belief_base.remove(Implies(p, q).to_cnf())
     print(belief_base)
+    
+if __name__ == "__main__":
+    example()
