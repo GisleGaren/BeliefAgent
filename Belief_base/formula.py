@@ -2,7 +2,7 @@ class Formula:
     """
     This is an abstract base class (a.k.a interface) for all formula types, like a template.
     """
-    
+
     # Define how to convert formula into a readable string like (p ∧ q)
     def __str__(self):
         raise NotImplementedError
@@ -174,32 +174,41 @@ class And(Formula):
         return And(*flattened)
 
 class Or(Formula):
-    """Disjunction of formulas."""
+    # Pass arguments Or(p,q,r) because *formulas means we can pass any number of arguments
     def __init__(self, *formulas):
         self.formulas = formulas
     
+    # print(Or(Atom("p"), Atom("q")))  # Output: (p) ∨ (q)
     def __str__(self):
         return " ∨ ".join(f"({str(f)})" for f in self.formulas)
     
+    # Or(Atom("p"), Atom("q")) == Or(Atom("q"), Atom("p"))  # True regardless of order
     def __eq__(self, other):
         if isinstance(other, Or):
             return set(self.formulas) == set(other.formulas)
         return False
     
+    # We need this because we don't care about the order of the formulas inside the Or formula
+    # set([Or(p, q), Or(q, p)])  # Only one element stored
     def __hash__(self):
         return hash(("or", frozenset(self.formulas)))
     
+    # Or(Atom("p"), Not(Atom("q"))).symbols() # returns {"p", "q"}
     def symbols(self):
         return set().union(*[f.symbols() for f in self.formulas])
     
+    # {"p": True, "q": False} returns True because p is True
     def evaluate(self, assignment):
         return any(f.evaluate(assignment) for f in self.formulas)
     
+    # Example Or(p, And(q, r)) gives p ∨ (q ∧ r)
     def to_cnf(self):
         # Convert all subformulas to CNF first
+        # p.cnf() = p, And(q, r).cnf() = And(q, r) so cnf_formulas = [p, And(q, r)] in our example
         cnf_formulas = [f.to_cnf() for f in self.formulas]
         
         # Flatten nested ORs
+        # Our example cnf_formulas = [p, And(q, r)] has no Or inside it so we just return it as is
         flattened = []
         for f in cnf_formulas:
             if isinstance(f, Or):
@@ -208,75 +217,101 @@ class Or(Formula):
                 flattened.append(f)
         
         # Apply distributivity of OR over AND
+        # We check for AND formulas and in our example we have one! So we get and_formulas = [And(q, r)]
         and_formulas = [f for f in flattened if isinstance(f, And)]
+        # If and formulas is empty, we can just return the flattened list as is, but our example is not empty so we continue
         if not and_formulas:
             return Or(*flattened)
         
         # Pick an AND to distribute over
+        # We pick the first value in the and_formulas list, which is just one formula And(q, r) in our example
         and_formula = and_formulas[0]
+        # We then take the original flattened list and get the non AND formulas from it
+        # Other_formulas = [p] in our example
         other_formulas = [f for f in flattened if f != and_formula]
         
         # Distribute OR over AND
         distributed = []
+        # and_formula.formulas in our case is [q, r] so first iteration is q, second r
         for conj in and_formula.formulas:
-            new_or = Or(conj, *other_formulas).to_cnf()
+            # Take the current conj (q in first iteration) and combine it with the other formulas (p in our example)
+            new_or = Or(conj, *other_formulas).to_cnf() # Or(q, p) in our example
+            # Add the new_or to the distributed list
             distributed.append(new_or)
         
+        # In our example we have distributed = [Or(q, p), Or(r, p)] and we wrap it in AND to get the final result
+        # And(Or(q, p), Or(r, p)) which is the CNF form of Or(p, And(q, r))
         return And(*distributed)
 
 class Implies(Formula):
     """Implication formula (P → Q)."""
+    # Extract the premise and conclusion from the implication
+    # Example: Implies(Atom("p"), Atom("q")) gives p → q
     def __init__(self, premise, conclusion):
         self.premise = premise
         self.conclusion = conclusion
     
+    # print(Implies(Atom("p"), Atom("q")))  # Output: (p) → (q)
     def __str__(self):
         return f"({str(self.premise)}) → ({str(self.conclusion)})"
     
+    # Implies(p, q) == Implies(p, q)  → True
     def __eq__(self, other):
         if isinstance(other, Implies):
             return self.premise == other.premise and self.conclusion == other.conclusion
         return False
     
+    # Makes the implication usable in sets and dictionaries
     def __hash__(self):
         return hash(("implies", hash(self.premise), hash(self.conclusion)))
     
+    # Returns the set of symbols in the implication
+    # Example: Implies(Atom("p"), Atom("q")).symbols() gives {"p", "q"}
     def symbols(self):
         return self.premise.symbols().union(self.conclusion.symbols())
     
+    # Returns false if the premise is true and the conclusion is false, otherwise true
+    # Example: Implies(Atom("p"), Atom("q")).evaluate({"p": True, "q": False}) returns False
     def evaluate(self, assignment):
         return (not self.premise.evaluate(assignment)) or self.conclusion.evaluate(assignment)
     
+    # We can rewrite P → Q as ¬P ∨ Q, this is necessary if we want to convert it to CNF
     def to_cnf(self):
         # P → Q is equivalent to ¬P ∨ Q
         return Or(Not(self.premise), self.conclusion).to_cnf()
 
 class Equiv(Formula):
     """Equivalence formula (P ↔ Q)."""
+    # Equiv(p, q) becomes (p ↔ q)
     def __init__(self, left, right):
         self.left = left
         self.right = right
     
+    # print(Equiv(Atom("p"), Atom("q")))  # Output: (p) ↔ (q)
     def __str__(self):
         return f"({str(self.left)}) ↔ ({str(self.right)})"
     
+    # Equiv(p, q) == Equiv(q, p)  # True because p ↔ q is logically symmetric
     def __eq__(self, other):
         if isinstance(other, Equiv):
             return (self.left == other.left and self.right == other.right) or \
                   (self.left == other.right and self.right == other.left)
         return False
     
+    # Again hashing to ignore order of the formulas inside the Equiv formula
     def __hash__(self):
         return hash(("equiv", frozenset([hash(self.left), hash(self.right)])))
     
+    # Equiv(Atom("p"), Not(Atom("q"))).symbols() leads to {'p', 'q'}
     def symbols(self):
         return self.left.symbols().union(self.right.symbols())
     
+    # Evaluates the equivalence: True if both sides are equal, False otherwise
     def evaluate(self, assignment):
         return self.left.evaluate(assignment) == self.right.evaluate(assignment)
     
     def to_cnf(self):
-        # P ↔ Q is equivalent to (P → Q) ∧ (Q → P), or (¬P ∨ Q) ∧ (¬Q ∨ P)
+        # P ↔ Q is equivalent to (P → Q) ∧ (Q → P). it could also be (¬P ∨ Q) ∧ (¬Q ∨ P)
         return And(
             Or(Not(self.left), self.right),
             Or(Not(self.right), self.left)
