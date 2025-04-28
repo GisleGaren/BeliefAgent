@@ -4,7 +4,8 @@ class Formula:
     """
     
     # The datastructure used is an Abstract Syntax Tree (AST) where each node is a formula, each leaf is a variable.
-    """
+    """   p ∧ (q ∨ ¬r)
+    
     And(
         Atom("p"),
         Or(
