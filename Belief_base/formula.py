@@ -2,6 +2,25 @@ class Formula:
     """
     This is an abstract base class (a.k.a interface) for all formula types, like a template.
     """
+    
+    # The datastructure used is an Abstract Syntax Tree (AST) where each node is a formula, each leaf is a variable.
+    """
+    And(
+        Atom("p"),
+        Or(
+            Atom("q"),
+            Not(Atom("r"))
+    )
+)
+    Can be represented as:
+        ∧
+       / \
+      p   ∨
+         / \
+        q   ¬
+             \
+              r
+    """
 
     # Define how to convert formula into a readable string like (p ∧ q)
     def __str__(self):
