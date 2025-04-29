@@ -1,6 +1,20 @@
 from Belief_base.belief_base import BeliefBase
 from Belief_base.formula import Implies, Or, Not, Atom
 from Belief_base.entailment import cnf_clauses_for_query
+from Belief_base.entailment import resolution_entails
+
+def test_resolution():
+    KB = BeliefBase()
+    p, q = Atom("p"), Atom("q")
+    
+    KB.add(Implies(p, q), priority=1)
+    KB.add(p, priority=0)
+    
+    query = q  # test if KB ⊨ q
+    
+    result = resolution_entails(KB, query)
+    
+    print("Does KB entail q?", result)  # Expected: True
 
 def tryClauses():
     # Create the belief base
@@ -50,4 +64,6 @@ def example():
     print(belief_base)
     
 if __name__ == "__main__":
-    tryClauses()
+    # tryClauses()
+    # example()
+    test_resolution()

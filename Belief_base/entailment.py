@@ -51,23 +51,23 @@ def extract_clauses(formula: Formula) -> List[Clause]:
             # If there is no or operator, then we have a unit clause like Atom("p") or Not(Atom("q")) which is a single literal
             disjunctions = [sub]
             
-    # set of literals to turn each disjunction into a (atom, is_positive) tuple
-    lits: Set[Literal] = set()
-    
-    # Loop through each literal in the disjunctions list
-    for lit in disjunctions:
-        # Check if the literal is true
-        if isinstance(lit, Atom):
-            lits.add((lit.name, True))  # Positive literal
-        # Check if the literal is a negation (false) and that it is an atom
-        elif isinstance(lit, Not) and isinstance(lit.formula, Atom):
-            lits.add((lit.formula.name, False))
-        else:
-            # In every proper CNF, every literal must be either an Atom or Not(Atom)
-            raise ValueError(f"Non literal in clause: {lit}")
+        # set of literals to turn each disjunction into a (atom, is_positive) tuple
+        lits: Set[Literal] = set()
         
-    # Finally add the set of literals to the clauses list as a frozenset
-    clauses.append(frozenset(lits)) 
+        # Loop through each literal in the disjunctions list
+        for lit in disjunctions:
+            # Check if the literal is true
+            if isinstance(lit, Atom):
+                lits.add((lit.name, True))  # Positive literal
+            # Check if the literal is a negation (false) and that it is an atom
+            elif isinstance(lit, Not) and isinstance(lit.formula, Atom):
+                lits.add((lit.formula.name, False))
+            else:
+                # In every proper CNF, every literal must be either an Atom or Not(Atom)
+                raise ValueError(f"Non literal in clause: {lit}")
+            
+        # Finally add the set of literals to the clauses list as a frozenset
+        clauses.append(frozenset(lits)) 
     
     return clauses
 
@@ -137,10 +137,10 @@ def resolution_entails(kb: BeliefBase, query: Formula) -> bool:
                     # If the set is not empty, we add it to the new_clauses set
                     new_clauses.add(R)
                     
-            # Below we add new_clauses to clauses and so if new_clauses is a subset of clauses, that means we have not made any new unique pair
-            # and so KB ⊭ query
-            if new_clauses.issubset(clauses):
-                return False
-            
-            # Add new_clauses to clauses
-            clauses |= new_clauses
+        # Below we add new_clauses to clauses and so if new_clauses is a subset of clauses, that means we have not made any new unique pair
+        # and so KB ⊭ query
+        if new_clauses.issubset(clauses):
+            return False
+        
+        # Add new_clauses to clauses
+        clauses |= new_clauses

@@ -7,8 +7,10 @@ class BeliefRevisionAgent:
     def __init__(self):
         self.base = BeliefBase()
         
+    # Method to ask AI agent if a given belief base entails a query φ
     def ask(self,query: Formula) -> bool:
         return resolution_entails(self.base, query)
+    
     # Method to add beliefs to the belief base with a given priority
     
     # Contract
