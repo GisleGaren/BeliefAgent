@@ -1,6 +1,25 @@
 from Belief_base.belief_base import BeliefBase
 from Belief_base.formula import Implies, Or, Not, Atom
 
+def tryClauses():
+    # Create the belief base
+    KB = BeliefBase()
+    # Define the variables
+    p, q = Atom("p"), Atom("q")
+    
+    KB.add(Implies(p, q), priority=1)  # (¬p ∨ q)
+    KB.add(p, priority=0)              # (p)
+    
+    # Query: q and method to get CNF clauses 
+    clauses = cnf_clauses_for_query(KB, q)
+    for c in clauses:
+        print(c)
+        
+    # You should see:
+    #  frozenset({('p', False), ('q', True)})   # from ¬p ∨ q
+    #  frozenset({('p', True)})                 # from p
+    #  frozenset({('q', False)})                # from ¬q (the negated query)
+
 # Example usage
 def example():
     # Create a belief base
