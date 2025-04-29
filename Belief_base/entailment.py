@@ -1,6 +1,7 @@
 from typing import List, Set, Tuple
 from Belief_base.formula import Formula, And, Or, Not, Atom
 from Belief_base.belief_base import BeliefBase
+from itertools import combinations
 
 # Literal is for (atom name, is_positive) example: ("p", False) means ¬p
 Literal = Tuple[str, bool]
@@ -93,7 +94,7 @@ def cnf_clauses_for_query(kb: BeliefBase, query: Formula) -> List[Clause]:
     # Negate the φ and convert to cnf
     neg_query = Not(query).to_cnf()
     
-    # Add the negated φ to the clauses list, so the final all_clauses in our example becomes: 
+    # Add the negated φ to the clauses list (because resolution works by proof of contradition), so the final all_clauses in our example becomes: 
     all_clauses.extend(extract_clauses(neg_query))
     
     """ 
@@ -105,3 +106,41 @@ def cnf_clauses_for_query(kb: BeliefBase, query: Formula) -> List[Clause]:
         
         """
     return all_clauses
+
+# Method that takes in the belief base, query (phi) to check if the belief base entails the query kb ⊨ query?
+def resolution_entails(kb: BeliefBase, query: Formula) -> bool:
+    # Turn everything into clauses and cnf_clauses_for_query will also negate the query and return frozensets of literals
+    clauses = set(cnf_clauses_for_query(kb, query))
+
+    # new_clauses to store any new clauses generated during resolution
+    new_clauses = set()
+    while True:
+        # Loop over all pairs of existing clauses
+        # We try to resolve each pair -- that is, find complementary pairs like p and ¬p so that they cancel out
+        for C1, C2 in combinations(clauses, 2):
+            # For each literal (symbol, is_positive) in C1, check if the opposite literal exists in C2
+            # Example: C1 = [("p", False), ("q", True)] and C2 = [("p", True)]
+            for (sym, pos) in C1:
+                # We take the first element ("p", False) and define pair comp as ("p", True)
+                comp = (sym, not pos)
+                # If ("p", True) is in C2 (in our example it is), we can resolve C1 and C2
+                if comp in C2:
+                    # C1 | C2 is the set union between C1 and C2 combining all literals
+                    # So in our example, that would be {("p", False), ("q", True), ("p", True)} and we take
+                    # this and remove the complementary pair in our case ("p", True) and ("p", False)
+                    # and we are left with only ("q", True)
+                    R = frozenset((C1 | C2) - {(sym,pos), comp})
+                    # If the set is empty, that means we have derived the empty clause, which means we have a contradiction
+                    # and therefore the original query is entailed by the belief base
+                    if len(R) == 0:
+                        return True
+                    # If the set is not empty, we add it to the new_clauses set
+                    new_clauses.add(R)
+                    
+            # Below we add new_clauses to clauses and so if new_clauses is a subset of clauses, that means we have not made any new unique pair
+            # and so KB ⊭ query
+            if new_clauses.issubset(clauses):
+                return False
+            
+            # Add new_clauses to clauses
+            clauses |= new_clauses
