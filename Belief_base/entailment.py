@@ -1,5 +1,6 @@
 from typing import List, Set, Tuple
 from Belief_base.formula import Formula, And, Or, Not, Atom
+from Belief_base.belief_base import BeliefBase
 
 # Literal is for (atom name, is_positive) example: ("p", False) means ¬p
 Literal = Tuple[str, bool]
@@ -66,3 +67,41 @@ def extract_clauses(formula: Formula) -> List[Clause]:
         
     # Finally add the set of literals to the clauses list as a frozenset
     clauses.append(frozenset(lits)) 
+    
+    return clauses
+
+"""
+beliefs = [
+    Or(Not(Atom("p")), Atom("q")),  # represents (¬p ∨ q)
+    Atom("p")                        # represents (p)
+]
+"""
+
+# Query the clauses where we 
+def cnf_clauses_for_query(kb: BeliefBase, query: Formula) -> List[Clause]:
+    all_clauses: List[Clause] = []
+    
+    # Iterate through each belief in the belief base
+    # 1st iteration example: belief = Or(Not(Atom("p")), Atom("q"))
+    # Extract_clauses recognizes the OR and builds set frozenset({ ("p", False), ("q", True) })
+    # 2nd iteration example: belief = Atom("p")
+    # Extract_clauses recognizes the single atom and builds set frozenset({ ("p", True) })
+    for belief in kb.get_beliefs():
+        # For each belief formula, get each 
+        all_clauses.extend(extract_clauses(belief))
+    
+    # Negate the φ and convert to cnf
+    neg_query = Not(query).to_cnf()
+    
+    # Add the negated φ to the clauses list, so the final all_clauses in our example becomes: 
+    all_clauses.extend(extract_clauses(neg_query))
+    
+    """ 
+    [
+            frozenset({ ("p", False), ("q", True) }),   # (¬p ∨ q)   from Implies(p, q)
+            frozenset({ ("p", True) }),                 # (p)        from Atom(p)
+            frozenset({ ("q", False) })                  # (¬q)       from ¬query
+        ] 
+        
+        """
+    return all_clauses

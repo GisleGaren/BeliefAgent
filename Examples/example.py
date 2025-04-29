@@ -1,5 +1,6 @@
 from Belief_base.belief_base import BeliefBase
 from Belief_base.formula import Implies, Or, Not, Atom
+from Belief_base.entailment import cnf_clauses_for_query
 
 def tryClauses():
     # Create the belief base
@@ -49,4 +50,4 @@ def example():
     print(belief_base)
     
 if __name__ == "__main__":
-    example()
+    tryClauses()
