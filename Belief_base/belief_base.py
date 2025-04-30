@@ -1,8 +1,5 @@
 from Belief_base.formula import Formula
 from itertools import combinations
-from Belief_base.entailment import resolution_entails
-from functools import reduce
-from operator import and_
 
 class BeliefBase:
     """
@@ -47,6 +44,8 @@ class BeliefBase:
     # Computes all maximal subsets of the current belief base that do not entail formula phi
     # These subsets are the remainders and we need these for the partial meet contraction
     def compute_remainders(self, phi: Formula):
+        # Import resolution_entails locally to avoid circular import
+        from Belief_base.entailment import resolution_entails
         # Retrieve the belief base and its priorities in each element
         beliefs = self.get_prioritized_beliefs()
         # Get the number of beliefs in the belief base
@@ -80,20 +79,3 @@ class BeliefBase:
                 break
 
         return remainders
-
-# We take the remainders and sum up the priority values and return the set with the highest score
-# If we have several sets with the same highest score, we return all of them
-def select_remainders(remainders: list[set[int]], priorities: list[int]) -> list[set[int]]:
-    # If we for example have remainders = [{0, 1}, {0, 3}] and priorities = [1, 2, 3, 4]
-    # We compute the scores for each remainder: {0, 1} = 1 + 2 = 3 and {0, 3} = 1 + 4 = 5
-    scores = [sum(priorities[i] for i in rem) for rem in remainders]
-    # Return the max score
-    max_score = max(scores)
-    # Return the remainder sets with the max score
-    return [R for R, s in zip(remainders, scores) if s == max_score]
-
-# If selected is [{0, 2}, {1, 2}], then the intersection is {2}
-def intersect_selected(selected: list[set[int]]) -> set[int]:
-    if not selected:
-        return set()
-    return reduce(and_, selected)
