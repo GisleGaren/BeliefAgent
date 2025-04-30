@@ -78,3 +78,14 @@ class BeliefBase:
                 break
 
         return remainders
+
+# We take the remainders and sum up the priority values and return the set with the highest score
+# If we have several sets with the same highest score, we return all of them
+def select_remainders(remainders: list[set[int]], priorities: list[int]) -> list[set[int]]:
+    # If we for example have remainders = [{0, 1}, {0, 3}] and priorities = [1, 2, 3, 4]
+    # We compute the scores for each remainder: {0, 1} = 1 + 2 = 3 and {0, 3} = 1 + 4 = 5
+    scores = [sum(priorities[i] for i in rem) for rem in remainders]
+    # Return the max score
+    max_score = max(scores)
+    # Return the remainder sets with the max score
+    return [R for R, s in zip(remainders, scores) if s == max_score]
