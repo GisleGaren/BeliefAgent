@@ -1,6 +1,8 @@
 from Belief_base.formula import Formula
 from itertools import combinations
 from Belief_base.entailment import resolution_entails
+from functools import reduce
+from operator import and_
 
 class BeliefBase:
     """
@@ -89,3 +91,9 @@ def select_remainders(remainders: list[set[int]], priorities: list[int]) -> list
     max_score = max(scores)
     # Return the remainder sets with the max score
     return [R for R, s in zip(remainders, scores) if s == max_score]
+
+# If selected is [{0, 2}, {1, 2}], then the intersection is {2}
+def intersect_selected(selected: list[set[int]]) -> set[int]:
+    if not selected:
+        return set()
+    return reduce(and_, selected)
