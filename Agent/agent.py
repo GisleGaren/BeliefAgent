@@ -14,5 +14,15 @@ class BeliefRevisionAgent:
     # Method to add beliefs to the belief base with a given priority
     
     # Contract
-    
-    # Expand
+    def contract_partial_meet(self, formula: Formula):
+        """
+        Remove a belief from the belief base using partial meet contraction.
+        """
+        # Compute all maximal subsets of the belief base that do not entail the formula
+        remainders = self.base.compute_remainders(formula)
+        
+        # Selection function
+        
+        # Intersection = indexes to keep
+        
+        # Then rebuild KB in place: Keep only the beliefs in the intersection of all remainders
