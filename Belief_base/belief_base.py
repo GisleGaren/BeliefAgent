@@ -94,6 +94,7 @@ def select_remainders(remainders: list[set[int]], priorities: list[int]) -> list
 
 # If selected is [{0, 2}, {1, 2}], then the intersection is {2}
 def intersect_selected(selected: list[set[int]]) -> set[int]:
+    # If selected is empty, return an empty set
     if not selected:
         return set()
     return reduce(and_, selected)

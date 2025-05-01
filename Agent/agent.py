@@ -1,7 +1,6 @@
-from Belief_base.belief_base import BeliefBase
+from Belief_base.belief_base import BeliefBase, select_remainders, intersect_selected
 from Belief_base.formula import Formula, Atom, Not, Or, And
 from Belief_base.entailment import resolution_entails
-# Class to represent the interface 
 
 class BeliefRevisionAgent:
     def __init__(self):
@@ -13,16 +12,38 @@ class BeliefRevisionAgent:
     
     # Method to add beliefs to the belief base with a given priority
     
-    # Contract
+    # Contract partial meet is a method that removves a belief from the belief base whilst still keeping the belief base consistent
     def contract_partial_meet(self, formula: Formula):
-        """
-        Remove a belief from the belief base using partial meet contraction.
-        """
+        
+        # Vacuity check: if the belief base doesn't entail the formula, no need to contract
+        if not resolution_entails(self.base, formula):
+            return
+        
         # Compute all maximal subsets of the belief base that do not entail the formula
         remainders = self.base.compute_remainders(formula)
         
-        # Selection function
+        # Get the priority values in the same order as belief indices
+        priorities = [pri for _, pri in self.base.get_prioritized_beliefs()]
         
-        # Intersection = indexes to keep
+        # Select the remainders with the highest total priority
+        # If we have remainders = [{0, 1}, {0, 3}] and priorities = [1, 2, 3, 4]
+        # We compute the scores for each remainder: {0, 1} = 1 + 2 = 3 and {0, 3} = 1 + 4 = 5, we return the set with the highest score so {0, 3}
+        # If we have several sets with the same highest score, we return all of them
+        selected = select_remainders(remainders, priorities)
+        
+        # Intersect the slected remanders. If selected is [{0, 2}, {1, 2}], then the intersection is {2}
+        # If we only have one selected remainder, like {0, 2}, we return {0, 2}
+        keep_indexes = intersect_selected(selected)
         
         # Then rebuild KB in place: Keep only the beliefs in the intersection of all remainders
+        all_beliefs = self.base.get_prioritized_beliefs()
+        
+        # Filter the beliefs to keep only those indexes that were found in the intersection
+        new_beliefs = [all_beliefs[i] for i in sorted(keep_indexes)]
+        
+        # Clear the belief base because we want to add the new beliefs that were filtered by the intersection
+        self.base.clear()
+        
+        # Add the new beliefs to the belief base and its priorities
+        for belief, priority in new_beliefs:
+            self.base.add(belief, priority)

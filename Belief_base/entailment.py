@@ -1,6 +1,6 @@
 from typing import List, Set, Tuple
 from Belief_base.formula import Formula, And, Or, Not, Atom
-from Belief_base.belief_base import BeliefBase
+# from Belief_base.belief_base import BeliefBase
 from itertools import combinations
 
 # Literal is for (atom name, is_positive) example: ("p", False) means ¬p
@@ -79,7 +79,8 @@ beliefs = [
 """
 
 # Query the clauses where we 
-def cnf_clauses_for_query(kb: BeliefBase, query: Formula) -> List[Clause]:
+def cnf_clauses_for_query(kb, query) -> List[Clause]:
+    from Belief_base.belief_base import BeliefBase
     all_clauses: List[Clause] = []
     
     # Iterate through each belief in the belief base
@@ -108,7 +109,8 @@ def cnf_clauses_for_query(kb: BeliefBase, query: Formula) -> List[Clause]:
     return all_clauses
 
 # Method that takes in the belief base, query (phi) to check if the belief base entails the query kb ⊨ query?
-def resolution_entails(kb: BeliefBase, query: Formula) -> bool:
+def resolution_entails(kb, query) -> bool:
+    from Belief_base.belief_base import BeliefBase
     # Turn everything into clauses and cnf_clauses_for_query will also negate the query and return frozensets of literals
     clauses = set(cnf_clauses_for_query(kb, query))
 

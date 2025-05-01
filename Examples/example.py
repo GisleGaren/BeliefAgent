@@ -2,6 +2,23 @@ from Belief_base.belief_base import BeliefBase
 from Belief_base.formula import Implies, Or, Not, Atom
 from Belief_base.entailment import cnf_clauses_for_query
 from Belief_base.entailment import resolution_entails
+from Agent.agent import BeliefRevisionAgent
+
+def test_contraction():
+    agent = BeliefRevisionAgent()
+    p, q, r = Atom("p"), Atom("q"), Atom("r")
+
+    agent.base.add(Implies(p, q), priority=2)   # ¬p ∨ q
+    agent.base.add(p, priority=1)               # p
+    agent.base.add(Or(Not(q), r), priority=3)   # ¬q ∨ r
+
+    print("Before contraction:")
+    print(agent.base)
+
+    agent.contract_partial_meet(q)
+
+    print("\nAfter contraction by q:")
+    print(agent.base)
 
 def test_resolution():
     KB = BeliefBase()
