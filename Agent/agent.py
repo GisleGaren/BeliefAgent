@@ -47,3 +47,8 @@ class BeliefRevisionAgent:
         # Add the new beliefs to the belief base and its priorities
         for belief, priority in new_beliefs:
             self.base.add(belief, priority)
+
+    def revise(self, formula: Formula):
+        # K * φ = (K - ¬φ) ∪ {φ}
+        self.contract_partial_meet(Not(formula))
+        self.base.add(formula)

@@ -27,13 +27,15 @@ via extract_clauses()
 
 """
 def extract_clauses(formula: Formula) -> List[Clause]:
+    print("Extraction started for formula:", formula)
     # Double check if the formula is in CNF
     cnf = formula.to_cnf()
+    print("CNF form:", cnf)
     
     # If the formula has ∧, break up the conjunction into separate clauses
     if isinstance(cnf, And):
         # Example: And(Or(p,q), Or(r,s)) becomes [Or(p,q), Or(r,s)]
-        subformulas = list(cnf.subformulas)
+        subformulas = list(cnf.formulas)
     else:
         # If there is no ∧, treat the whole formula as a single clause
         subformulas = [cnf]
