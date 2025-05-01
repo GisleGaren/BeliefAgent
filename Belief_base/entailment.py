@@ -27,10 +27,10 @@ via extract_clauses()
 
 """
 def extract_clauses(formula: Formula) -> List[Clause]:
-    print("Extraction started for formula:", formula)
+    # print("Extraction started for formula:", formula)
     # Double check if the formula is in CNF
     cnf = formula.to_cnf()
-    print("CNF form:", cnf)
+    # print("CNF form:", cnf)
     
     # If the formula has ∧, break up the conjunction into separate clauses
     if isinstance(cnf, And):

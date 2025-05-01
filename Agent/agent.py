@@ -22,6 +22,12 @@ class BeliefRevisionAgent:
         # Compute all maximal subsets of the belief base that do not entail the formula
         remainders = self.base.compute_remainders(formula)
         
+        # --- guard against empty remainders ---
+        if not remainders:
+            # no way to remove formula; clear the base entirely
+            self.base.clear()
+            return
+        
         # Get the priority values in the same order as belief indices
         priorities = [pri for _, pri in self.base.get_prioritized_beliefs()]
         
@@ -52,3 +58,19 @@ class BeliefRevisionAgent:
         # K * φ = (K - ¬φ) ∪ {φ}
         self.contract_partial_meet(Not(formula))
         self.base.add(formula)
+
+if __name__ == "__main__":
+    import os
+    from Belief_base.parser import parse_file
+
+    # locate the test file next to your Tests folder
+    txt_path = os.path.join(os.path.dirname(__file__), "..", "Tests", "test_parser.txt")
+    formulas = parse_file(txt_path)
+
+    agent = BeliefRevisionAgent()
+    for f in formulas:
+        print(f"> Revising by: {f}")
+        agent.revise(f)
+
+    print("\n🧠 Final belief base after all revisions:")
+    print(agent.base)
