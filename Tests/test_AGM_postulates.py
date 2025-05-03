@@ -4,13 +4,30 @@ from Belief_base.formula import Atom, Not, Or
 def test_success_postulate():
     print("Running test_success_postulate")
     agent = BeliefRevisionAgent()
-    p = Atom("p")
-    agent.revise(p)
-    print("🧠 Belief base after revise(p):")
+    
+    p = Atom("p")               # "Light is on"
+    q = Atom("q")               # "Switch is broken"
+
+    # Add: p and p → q   (which is ¬p ∨ q)
+    agent.base.add(p)
+    agent.base.add(Or(Not(p), q))
+
+    print("🧠 Belief base before revision:")
     print(agent.base)
-    print("❓ Does the base entail p?", agent.ask(p))
-    assert agent.ask(p), "Success postulate failed: added formula should be entailed"
-    print("test_success_postulate passed\n")
+
+    # Revise with ¬q — "Switch is NOT broken"
+    agent.revise(Not(q))
+
+    # Because of modus ponens, we should now have ¬p in the belief base
+    # But that contradicts the original belief base because p, p → q entails q
+    print("\n🧠 Belief base after revise(¬q):")
+    print(agent.base)
+
+    # Assert expected outcomes
+    assert not agent.ask(q), "Expected q not to be entailed after revising with ¬q"
+    assert agent.ask(Not(q)), "Expected ¬q to be entailed after revising with ¬q"
+
+    print("test_success_postulate (conflict case) passed\n")
 
 def test_inclusion_postulate():
     print("Running test_inclusion_postulate")

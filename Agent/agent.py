@@ -53,12 +53,18 @@ class BeliefRevisionAgent:
         # Add the new beliefs to the belief base and its priorities
         for belief, priority in new_beliefs:
             self.base.add(belief, priority)
+            
+    def expand(self, formula: Formula, priority: int = 0):
+        # Fairly simple, we simply add φ (in CNF form) with the given priority.
+        # Note: this can introduce inconsistency, but expansion
+        # by definition does not restore consistency.
+        self.base.add(formula, priority)
 
     def revise(self, formula: Formula):
         # K * φ = (K - ¬φ) ∪ {φ}
         self.contract_partial_meet(Not(formula))
-        self.base.add(formula)
-
+        self.expand(formula)
+        
 if __name__ == "__main__":
     import os
     from Belief_base.parser import parse_file
