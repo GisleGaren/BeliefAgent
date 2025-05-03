@@ -33,6 +33,37 @@ def test_success_postulate():
 
     print("test_success_postulate (conflict case) passed\n")
     
+def test_contraction_success_postulate():
+    print("Running test_contraction_success_postulate")
+    agent = BeliefRevisionAgent()
+    
+    # Pick two atoms
+    p = Atom("p")
+    q = Atom("q")
+
+    # Seed the base so that it entails q:
+    #   1) p
+    #   2) p → q  (¬p ∨ q)
+    agent.base.add(p)
+    agent.base.add(Or(Not(p), q))
+
+    print("🧠 Belief base before contraction by q:")
+    print(agent.base)
+    # sanity‐check: we must entail q right now
+    assert agent.ask(q), "Setup failure: base should entail q before contraction"
+
+    # NOW contract by q
+    agent.contract_partial_meet(q)
+
+    print("\n🧠 Belief base after contraction by q:")
+    print(agent.base)
+    # Success postulate demands that q is no longer entailed
+    assert not agent.ask(q), \
+        "Contraction success postulate failed: q is still entailed after contracting by q"
+
+    print("test_contraction_success_postulate passed\n")
+
+    
 # After contracting the belief base by some formula φ, the resulting belief base should be a subset of the original belief base.
 def test_inclusion_postulate():
     print("Running test_inclusion_postulate")
@@ -67,6 +98,38 @@ def test_inclusion_postulate():
     assert new_beliefs.issubset(original_beliefs), "Inclusion postulate failed: new base not a subset"
 
     print("test_inclusion_postulate passed\n")
+    
+def test_inclusion_postulate_revision():
+    print("Running test_inclusion_postulate_revision")
+    agent = BeliefRevisionAgent()
+
+    # 1) Seed the base so it contains p and (¬p ∨ q)
+    p, q, r = Atom("p"), Atom("q"), Atom("r")
+    agent.base.add(p)
+    agent.base.add(Or(Not(p), q))
+
+    print("🧠 Belief base before revision:")
+    print(agent.base)
+
+    # 2) Snapshot original beliefs (no r yet)
+    original = set(agent.base.get_beliefs())
+
+    # 3) Revise by r
+    agent.revise(r)
+
+    print("\n🧠 Belief base after revising with r:")
+    print(agent.base)
+
+    # 4) Everything in the new base must come from original ∪ {r}
+    new_beliefs = set(agent.base.get_beliefs())
+    allowed = original.union({r})
+    assert new_beliefs.issubset(allowed), (
+        "Inclusion postulate for revision failed: "
+        f"new base {new_beliefs} not ⊆ original∪{{r}} = {allowed}"
+    )
+
+    print("test_inclusion_postulate_revision passed\n")
+
 
 # If a formula ϕ is not entailed by the belief base, then contracting ϕ should not change anything.
 # In short: you can't remove what you don't believe, so the base should stay the same.
@@ -101,7 +164,49 @@ def test_vacuity_postulate():
 
     print("test_vacuity_postulate passed\n")
 
+def test_vacuity_postulate_revision():
+    print("Running test_vacuity_postulate_revision")
+    agent = BeliefRevisionAgent()
+
+    # Atoms
+    p = Atom("p")
+    q = Atom("q")
+    s = Atom("s")  # "The sun is shining"
+
+    # 1) Seed base so that it does NOT entail ¬s
+    #    We'll just add p and (p → q).  There's no mention of 's' or '¬s'.
+    agent.base.add(p)
+    agent.base.add(Or(Not(p), q))
+
+    print("🧠 Belief base before vacuous revision with 's':")
+    print(agent.base)
+
+    # 2) Check we indeed do NOT entail ¬s
+    assert not agent.ask(Not(s)), "Setup failure: base should not entail ¬s"
+
+    # 3) Snapshot original beliefs
+    original = set(agent.base.get_beliefs())
+
+    # 4) Revise by s
+    agent.revise(s)
+
+    print("\n🧠 Belief base after vacuous revision with 's':")
+    print(agent.base)
+
+    # 5) The new beliefs must be exactly original ∪ {s}
+    new_beliefs = set(agent.base.get_beliefs())
+    expected    = original.union({s})
+    assert new_beliefs == expected, (
+        f"Vacuity postulate for revision failed:\n"
+        f" got    = {new_beliefs}\n"
+        f" expect = {expected}"
+    )
+
+    print("test_vacuity_postulate_revision passed\n")
+
+
 # In the slides in week 11, the consistency postulate is a part of the revision postulates
+# With consistency postulate, we are saying that the belief base should not entail a contradiction after revision.
 def test_consistency_postulate():
     print("Running test_consistency_postulate")
     agent = BeliefRevisionAgent()
@@ -137,31 +242,82 @@ def test_consistency_postulate():
     
     print("test_consistency_postulate passed\n")
 
+# Extensionality postulates asks: If two formulas ϕ and ψ are logically equivalent, then revising the belief base
+# with ϕ and ψ should yield the same result
 def test_extensionality_postulate():
     print("Running test_extensionality_postulate")
+
+    # Define two agents
     agent1 = BeliefRevisionAgent()
     agent2 = BeliefRevisionAgent()
-    p, q, r = Atom("p"), Atom("q"), Atom("r")
-    # Two formulas that are logically equivalent: (p ∨ q) and (q ∨ p)
-    print("🧠 Belief base of agent1 before contraction:")
-    print(agent1.base)
-    agent1.contract_partial_meet(Or(p, q))
-    print("🧠 Belief base of agent1 after contraction:")
-    print(agent1.base)
-    print("\n🧠 Belief base of agent2 before contraction:")
-    print(agent2.base)
-    agent2.contract_partial_meet(Or(q, p))
-    print("🧠 Belief base of agent2 after contraction:")
-    print(agent2.base)
-    # Compare sets of beliefs
+
+    p, q = Atom("p"), Atom("q")
+
+    # Give both agents the same initial belief base
+    agent1.base.add(Or(Not(p), q))  # p → q
+    agent2.base.add(Or(Not(p), q))  # p → q
+
+    # Define logically equivalent formulas
+    phi = Or(p, q)     # p ∨ q
+    psi = Or(q, p)     # q ∨ p
+
+    # Revise each agent with one of the formulas
+    agent1.revise(phi)
+    agent2.revise(psi)
+
+    # Compare the resulting belief bases
     b1 = set(agent1.base.get_beliefs())
     b2 = set(agent2.base.get_beliefs())
-    assert b1 == b2, "Extensionality postulate failed: logically equivalent formulas gave different results"
+
+    # Print for debugging
+    print("🧠 Agent 1 belief base after revising with p ∨ q:")
+    print(agent1.base)
+    print("\n🧠 Agent 2 belief base after revising with q ∨ p:")
+    print(agent2.base)
+
+    # Step 6: Check that belief bases are the same
+    assert b1 == b2, "Extensionality postulate failed: logically equivalent formulas led to different bases"
+
     print("test_extensionality_postulate passed\n")
+
+# The task doesn't specify extentionality for contraction for revision or contraction, but we'll try it both ways just in acse
+def test_extensionality_contraction():
+    print("Running test_extensionality_contraction")
+    agent1 = BeliefRevisionAgent()
+    agent2 = BeliefRevisionAgent()
+    p, q = Atom("p"), Atom("q")
+
+    # (1) Give them the same starting beliefs
+    agent1.base.add(p)                # just some seed belief
+    agent1.base.add(Or(p, q))         # "p ∨ q"
+    agent1.base.add(Or(Not(p), q))    # "p → q"
+    # copy that exact same set over to agent2
+    for f, pri in agent1.base.get_prioritized_beliefs():
+        agent2.base.add(f, pri)
+
+    # (2) Define two equivalent sentences
+    phi = Or(p, q)  # p ∨ q
+    psi = Or(q, p)  # q ∨ p
+
+    # (3) Contract them
+    agent1.contract_partial_meet(phi)
+    agent2.contract_partial_meet(psi)
+
+    # (4) Compare
+    b1 = set(agent1.base.get_beliefs())
+    b2 = set(agent2.base.get_beliefs())
+    print("Agent1 base after contracting p∨q:\n", agent1.base)
+    print("Agent2 base after contracting q∨p:\n", agent2.base)
+    assert b1 == b2, "Contraction extensionality failed"
+    print("test_extensionality_contraction passed\n")
 
 if __name__ == "__main__":
     test_success_postulate()
+    test_contraction_success_postulate()
     test_inclusion_postulate()
+    test_inclusion_postulate_revision()
     test_vacuity_postulate()
+    test_vacuity_postulate_revision()
     test_consistency_postulate()
     test_extensionality_postulate()
+    test_extensionality_contraction()
