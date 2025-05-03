@@ -47,3 +47,10 @@ class BeliefRevisionAgent:
         # Add the new beliefs to the belief base and its priorities
         for belief, priority in new_beliefs:
             self.base.add(belief, priority)
+
+
+    def expand(self, formula: Formula, priority=0):
+        """
+        Expand the Belief base with a new formula and priority.
+        """
+        self.base.add(formula, priority)
