@@ -13,7 +13,7 @@ def test_success_postulate():
     agent.base.add(p)
     agent.base.add(Or(Not(p), q))
 
-    print("🧠 Belief base before revision:")
+    print(" Belief base before revision:")
     print(agent.base)
 
     # Revise with ¬q — "Switch is NOT broken" 
@@ -24,7 +24,7 @@ def test_success_postulate():
 
     # Because of modus ponens, we should now have ¬p in the belief base
     # But that contradicts the original belief base because p, p → q entails q
-    print("\n🧠 Belief base after revise(¬q):")
+    print("\n Belief base after revise(¬q):")
     print(agent.base)
 
     # Assert expected outcomes
@@ -33,6 +33,7 @@ def test_success_postulate():
 
     print("test_success_postulate (conflict case) passed\n")
     
+# Contraction by q is supposed to remove just enough of your existing beliefs so that q is no longer a consequence of the belief base.
 def test_contraction_success_postulate():
     print("Running test_contraction_success_postulate")
     agent = BeliefRevisionAgent()
@@ -41,13 +42,13 @@ def test_contraction_success_postulate():
     p = Atom("p")
     q = Atom("q")
 
-    # Seed the base so that it entails q:
+    # Seed the base so that it entails q: modulus ponens
     #   1) p
     #   2) p → q  (¬p ∨ q)
     agent.base.add(p)
     agent.base.add(Or(Not(p), q))
 
-    print("🧠 Belief base before contraction by q:")
+    print(" Belief base before contraction by q:")
     print(agent.base)
     # sanity‐check: we must entail q right now
     assert agent.ask(q), "Setup failure: base should entail q before contraction"
@@ -55,7 +56,7 @@ def test_contraction_success_postulate():
     # NOW contract by q
     agent.contract_partial_meet(q)
 
-    print("\n🧠 Belief base after contraction by q:")
+    print("\n Belief base after contraction by q:")
     print(agent.base)
     # Success postulate demands that q is no longer entailed
     assert not agent.ask(q), \
@@ -77,7 +78,7 @@ def test_inclusion_postulate():
     agent.base.add(Or(p, r))
     agent.base.add(Or(Not(p), q))  # This implies q via modus ponens
 
-    print("🧠 Belief base before contraction with q:")
+    print(" Belief base before contraction with q:")
     print(agent.base)
 
     # Take a snapshot of current beliefs (CNF already applied)
@@ -88,7 +89,7 @@ def test_inclusion_postulate():
 
     # Based on our success postulate previously, both p and p → q gets removed, which leaves us with p ∨ r
     # Which is a subset
-    print("\n🧠 Belief base after contraction:")
+    print("\n Belief base after contraction:")
     print(agent.base)
 
     # Get the updated beliefs
@@ -99,28 +100,29 @@ def test_inclusion_postulate():
 
     print("test_inclusion_postulate passed\n")
     
+# Revision inclusion essntially says that new beliefs must trace back to old beliefs or new info we explicitly added
 def test_inclusion_postulate_revision():
     print("Running test_inclusion_postulate_revision")
     agent = BeliefRevisionAgent()
 
-    # 1) Seed the base so it contains p and (¬p ∨ q)
+    # Seed the base so it contains p and (¬p ∨ q)
     p, q, r = Atom("p"), Atom("q"), Atom("r")
     agent.base.add(p)
     agent.base.add(Or(Not(p), q))
 
-    print("🧠 Belief base before revision:")
+    print(" Belief base before revision:")
     print(agent.base)
 
-    # 2) Snapshot original beliefs (no r yet)
+    # Snapshot original beliefs (no r yet)
     original = set(agent.base.get_beliefs())
 
-    # 3) Revise by r
+    # Revise by r
     agent.revise(r)
 
-    print("\n🧠 Belief base after revising with r:")
+    print("\n Belief base after revising with r:")
     print(agent.base)
 
-    # 4) Everything in the new base must come from original ∪ {r}
+    # Everything in the new base must come from original ∪ {r}
     new_beliefs = set(agent.base.get_beliefs())
     allowed = original.union({r})
     assert new_beliefs.issubset(allowed), (
@@ -149,13 +151,13 @@ def test_vacuity_postulate():
     # get original belifs
     original_beliefs = set(agent.base.get_beliefs())
 
-    print("🧠 Belief base before vacuous contraction with 's':")
+    print(" Belief base before vacuous contraction with 's':")
     print(agent.base)
 
     # Try to contract "sun is shining" — which we don't believe
     agent.contract_partial_meet(s)
 
-    print("\n🧠 Belief base after vacuous contraction:")
+    print("\n Belief base after vacuous contraction:")
     print(agent.base)
 
     # Belief base should be unchanged
@@ -164,6 +166,7 @@ def test_vacuity_postulate():
 
     print("test_vacuity_postulate passed\n")
 
+# Simply, if ¬φ is not entailed by the belief base, then revising by φ just becomes expansion by φ.
 def test_vacuity_postulate_revision():
     print("Running test_vacuity_postulate_revision")
     agent = BeliefRevisionAgent()
@@ -173,27 +176,27 @@ def test_vacuity_postulate_revision():
     q = Atom("q")
     s = Atom("s")  # "The sun is shining"
 
-    # 1) Seed base so that it does NOT entail ¬s
+    # Seed base so that it does NOT entail ¬s
     #    We'll just add p and (p → q).  There's no mention of 's' or '¬s'.
     agent.base.add(p)
     agent.base.add(Or(Not(p), q))
 
-    print("🧠 Belief base before vacuous revision with 's':")
+    print(" Belief base before vacuous revision with 's':")
     print(agent.base)
 
-    # 2) Check we indeed do NOT entail ¬s
+    # Check we indeed do NOT entail ¬s
     assert not agent.ask(Not(s)), "Setup failure: base should not entail ¬s"
 
-    # 3) Snapshot original beliefs
+    # Snapshot original beliefs
     original = set(agent.base.get_beliefs())
 
-    # 4) Revise by s
+    # Revise by s
     agent.revise(s)
 
-    print("\n🧠 Belief base after vacuous revision with 's':")
+    print("\n Belief base after vacuous revision with 's':")
     print(agent.base)
 
-    # 5) The new beliefs must be exactly original ∪ {s}
+    # The new beliefs must be exactly original ∪ {s}
     new_beliefs = set(agent.base.get_beliefs())
     expected    = original.union({s})
     assert new_beliefs == expected, (
@@ -217,13 +220,13 @@ def test_consistency_postulate():
     agent.base.add(Or(p, q))      # p ∨ q
     agent.base.add(Or(Not(p), q)) # p → q (which is ¬p ∨ q)
     
-    print("🧠 Belief base before revision:")
+    print(" Belief base before revision:")
     print(agent.base)
     
     # Revise by p (which is consistent)
     agent.revise(p)
     
-    print("\n🧠 Belief base after revising with p:")
+    print("\n Belief base after revising with p:")
     print(agent.base)
     
     # Build an explicit contradiction: p ∧ ¬p
@@ -270,9 +273,9 @@ def test_extensionality_postulate():
     b2 = set(agent2.base.get_beliefs())
 
     # Print for debugging
-    print("🧠 Agent 1 belief base after revising with p ∨ q:")
+    print(" Agent 1 belief base after revising with p ∨ q:")
     print(agent1.base)
-    print("\n🧠 Agent 2 belief base after revising with q ∨ p:")
+    print("\n Agent 2 belief base after revising with q ∨ p:")
     print(agent2.base)
 
     # Step 6: Check that belief bases are the same
@@ -287,7 +290,7 @@ def test_extensionality_contraction():
     agent2 = BeliefRevisionAgent()
     p, q = Atom("p"), Atom("q")
 
-    # (1) Give them the same starting beliefs
+    # Give them the same starting beliefs
     agent1.base.add(p)                # just some seed belief
     agent1.base.add(Or(p, q))         # "p ∨ q"
     agent1.base.add(Or(Not(p), q))    # "p → q"
@@ -295,15 +298,15 @@ def test_extensionality_contraction():
     for f, pri in agent1.base.get_prioritized_beliefs():
         agent2.base.add(f, pri)
 
-    # (2) Define two equivalent sentences
+    # Define two equivalent sentences
     phi = Or(p, q)  # p ∨ q
     psi = Or(q, p)  # q ∨ p
 
-    # (3) Contract them
+    # Contract them
     agent1.contract_partial_meet(phi)
     agent2.contract_partial_meet(psi)
 
-    # (4) Compare
+    # Compare
     b1 = set(agent1.base.get_beliefs())
     b2 = set(agent2.base.get_beliefs())
     print("Agent1 base after contracting p∨q:\n", agent1.base)
