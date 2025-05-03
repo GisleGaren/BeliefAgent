@@ -61,7 +61,7 @@ class BeliefRevisionAgent:
         self.base.add(formula, priority)
 
     def revise(self, formula: Formula):
-        # K * φ = (K - ¬φ) ∪ {φ}
+        # K * φ = (K - ¬φ) ∪ {φ} THIS IS CALLED THE LEVI IDENTITY
         self.contract_partial_meet(Not(formula))
         self.expand(formula)
         

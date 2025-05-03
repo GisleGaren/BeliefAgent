@@ -8,6 +8,18 @@ Literal = Tuple[str, bool]
 # Clause is the frozenset of literals
 Clause  = frozenset[Literal]
 
+# We need this tautology check because if not, our resolution algorithm will treat every tautology as a contradiction, which is wrong
+# So we need this method to filter out tautologies from the clauses
+def is_tautology(clause: Clause) -> bool:
+    # clause is a frozenset of (symbol, is_positive) pairs
+    syms = {}
+    for sym, pos in clause:
+        if sym in syms and syms[sym] != pos:
+            # we’ve seen the same symbol with the opposite polarity
+            return True
+        syms[sym] = pos
+    return False
+
 """ 
 Something like this:
 
@@ -108,7 +120,9 @@ def cnf_clauses_for_query(kb, query) -> List[Clause]:
         ] 
         
         """
-    return all_clauses
+        
+    # DROP ALL CLAUSES THAT ARE TAUTOLOGIES OR ELSE THE CONSISTENCY POSTULATE WILL FAIL
+    return [c for c in all_clauses if not is_tautology(c)]
 
 # Method that takes in the belief base, query (phi) to check if the belief base entails the query kb ⊨ query?
 def resolution_entails(kb, query) -> bool:
