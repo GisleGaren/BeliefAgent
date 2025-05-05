@@ -75,6 +75,12 @@ B * φ = (B - ¬φ) + φ
 - Python 3.8+
 - No external libraries required.
 
+### Running the Tests
+Make sure that you are in the root directory.
+Run the AGM postulate tests via:
+```bash
+python -m Tests.test_AGM_postulates
+```
 ### Example
 Insert the formulas on `test_parser.txt`
 Run the agent with input formulas:
