@@ -86,21 +86,28 @@ def parse_formula(s: str) -> Formula:
     return root
 
 
-def parse_file(file_path: str) -> list[Formula]:
+def parse_file(file_path: str) -> list[tuple[Formula, int]]:
     """
-    Reads a text file line by line, parses each line into a Formula,
-    prints errors for bad lines, and returns a list of successful parses.
+    Parses a file with each line formatted as: formula ; priority
+    Returns a list of (Formula, priority) tuples.
     """
-    formulas = []
+    results = []
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f:
             line = line.strip()
             if not line:
                 continue
             try:
-                formulas.append(parse_formula(line))
+                if ";" in line:
+                    formula_str, priority_str = line.split(";")
+                    formula = parse_formula(formula_str.strip())
+                    priority = int(priority_str.strip())
+                    results.append((formula, priority))
+                else:
+                    # default priority 0 if missing
+                    formula = parse_formula(line)
+                    results.append((formula, 0))
             except Exception as e:
                 print(f"Error parsing '{line}': {e}")
-                # skip malformed formula
                 continue
-    return formulas
+    return results

@@ -3,6 +3,7 @@ from Belief_base.formula import Implies, Or, Not, Atom
 from Belief_base.entailment import cnf_clauses_for_query
 from Belief_base.entailment import resolution_entails
 from Agent.agent import BeliefRevisionAgent
+from Belief_base.parser import parse_file
 
 def test_contraction():
     agent = BeliefRevisionAgent()
@@ -81,6 +82,41 @@ def example():
     print(belief_base)
     
 if __name__ == "__main__":
+    import os
+
+    txt_path = os.path.join(os.path.dirname(__file__), "..", "Tests", "test_parser.txt")
+    entries = parse_file(txt_path)
+
+    agent = BeliefRevisionAgent()
+
+    # Test EXPAND
+    print("\n📌 EXPANDING with parsed formulas...")
+    for f, pri in entries:
+        print(f"Adding: {f} with priority {pri}")
+        agent.expand(f, pri)
+
+    print("\n🧠 Belief base after expansion:")
+    print(agent.base)
+
+    # Test ASK
+    print("\n🔍 ASKING: does belief base entail q?")
+    q = Atom("q")
+    print("Answer:", agent.ask(q))
+
+    # Test CONTRACT
+    print("\n🧹 CONTRACTING q...")
+    agent.contract_partial_meet(q)
+
+    print("\n🧠 Belief base after contraction of q:")
+    print(agent.base)
+
+    # Test REVISE
+    print("\n🔁 REVISING with ¬p...")
+    not_p = Not(Atom("p"))
+    agent.revise(not_p)
+
+    print("\n🧠 Final belief base after revision:")
+    print(agent.base)
     # tryClauses()
     # example()
-    test_resolution()
+    # test_resolution()
