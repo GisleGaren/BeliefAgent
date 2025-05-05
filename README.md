@@ -76,6 +76,7 @@ B * φ = (B - ¬φ) + φ
 - No external libraries required.
 
 ### Example
+Insert the formulas on `test_parser.txt`
 Run the agent with input formulas:
 ```bash
-python Agent/agent.py
+python -m Agent.agent
