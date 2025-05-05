@@ -81,8 +81,9 @@ Run the AGM postulate tests via:
 ```bash
 python -m Tests.test_AGM_postulates
 ```
-### Example
-Insert the formulas on `test_parser.txt`
-Run the agent with input formulas:
+### Test with a Manual input
+Insert the formulas that you want on `test_parser.txt`
+Make sure the format is correct { "formula" ; "priority_number" } For example: (p → q);5
+Run the belief revision (Make sure you are in the root directory) with input formulas:
 ```bash
-python -m Agent.agent
+python -m Examples.example
