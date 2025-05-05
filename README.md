@@ -87,3 +87,5 @@ Make sure the format is correct { "formula" ; "priority_number" } For example: (
 Run the belief revision (Make sure you are in the root directory) with input formulas:
 ```bash
 python -m Examples.example
+
+This should output new beliefs where we test all the methods of the agent!
